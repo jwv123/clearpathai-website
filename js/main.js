@@ -26,57 +26,85 @@ function initLoader() {
   const labels = [
     'INITIALIZING',
     'LOADING ASSETS',
-    'RENDERING MODULES',
+    'BUFFERING MEDIA',
     'CALIBRATING SYSTEMS',
     'ALMOST READY',
     'ONLINE'
   ];
 
-  let loaded = 0;
-  const total = assets.length;
+  let totalLoaded = 0;
+  let totalBytes = 0;
 
   function updateProgress() {
-    const pct = Math.round((loaded / total) * 100);
+    const pct = totalBytes > 0
+      ? Math.min(Math.round((totalLoaded / totalBytes) * 100), 100)
+      : 0;
     loaderBar.style.width = pct + '%';
     loaderPercent.textContent = pct;
     const labelIndex = Math.min(Math.floor(pct / 20), labels.length - 1);
     loaderLabel.textContent = labels[labelIndex];
   }
 
-  function assetDone() {
-    loaded++;
+  // First pass: HEAD requests to get file sizes
+  Promise.all(assets.map(src =>
+    fetch(src, { method: 'HEAD' })
+      .then(r => {
+        const size = parseInt(r.headers.get('Content-Length') || '0', 10);
+        totalBytes += size;
+        return size;
+      })
+      .catch(() => 0)
+  )).then(() => {
     updateProgress();
-    if (loaded === total) {
-      setTimeout(finishLoading, 400);
-    }
-  }
 
-  function loadAsset(src) {
-    return new Promise((resolve) => {
-      if (src.endsWith('.mp4')) {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true;
-        video.addEventListener('canplaythrough', () => resolve(assetDone()), { once: true });
-        video.addEventListener('error', () => resolve(assetDone()));
-        video.src = src;
-        // Timeout fallback in case canplaythrough never fires
-        setTimeout(() => resolve(assetDone()), 30000);
-      } else {
-        const img = new Image();
-        img.addEventListener('load', () => resolve(assetDone()), { once: true });
-        img.addEventListener('error', () => resolve(assetDone()));
-        img.src = src;
-        // Timeout fallback
-        setTimeout(() => resolve(assetDone()), 15000);
-      }
+    // Second pass: actually download every byte
+    let completed = 0;
+    const total = assets.length;
+
+    const downloads = assets.map(src => {
+      return fetch(src)
+        .then(response => {
+          if (!response.body) {
+            // No streaming — just mark done
+            completed++;
+            totalLoaded = totalBytes;
+            updateProgress();
+            return;
+          }
+          const reader = response.body.getReader();
+          let received = 0;
+
+          function read() {
+            return reader.read().then(({ done, value }) => {
+              if (done) {
+                completed++;
+                updateProgress();
+                if (completed === total) finishLoading();
+                return;
+              }
+              received += value.length;
+              totalLoaded += value.length;
+              updateProgress();
+              return read();
+            });
+          }
+          return read();
+        })
+        .catch(() => {
+          completed++;
+          updateProgress();
+          if (completed === total) finishLoading();
+        });
     });
-  }
 
-  updateProgress();
-  assets.forEach(src => loadAsset(src));
+    // If all fetches resolve without streaming, ensure we still finish
+    Promise.all(downloads).then(() => {
+      if (completed === total) finishLoading();
+    });
+  });
 
   function finishLoading() {
+    totalLoaded = totalBytes;
     loaderBar.style.width = '100%';
     loaderPercent.textContent = '100';
     loaderLabel.textContent = labels[labels.length - 1];
@@ -84,7 +112,6 @@ function initLoader() {
       loader.classList.add('fade-out');
       site.classList.remove('site-hidden');
       site.classList.add('site-visible');
-      // Start site interactions
       initSmoothScroll();
       initNavbarScroll();
       initActiveSection();
@@ -92,7 +119,7 @@ function initLoader() {
       initMobileMenu();
       initContactForm();
       initVideoFallback();
-    }, 500);
+    }, 600);
   }
 }
 
