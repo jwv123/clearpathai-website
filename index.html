@@ -12,6 +12,25 @@
 </head>
 <body>
 
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="loader-logo">
+        <span class="loader-logo-text">ClearPath</span><span class="loader-logo-accent">AI</span>
+      </div>
+      <div class="loader-bar-track">
+        <div class="loader-bar" id="loader-bar"></div>
+      </div>
+      <div class="loader-status">
+        <span id="loader-percent">0</span><span class="loader-blink">_</span>
+        <span id="loader-label">INITIALIZING</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content (hidden until loaded) -->
+  <div id="site" class="site-hidden">
+
   <!-- Scanline overlay -->
   <div class="scanlines" aria-hidden="true"></div>
 
@@ -61,7 +80,7 @@
           <p>We partner with businesses across industries to unlock the potential of their data — turning complexity into clarity, and insight into action. Whether you're just beginning your AI journey or scaling existing capabilities, ClearPath AI provides the intelligence infrastructure to move forward with confidence.</p>
         </div>
         <div class="image-col">
-          <img src="assets/intro-image.png" alt="AI data pathways visualization" loading="lazy">
+          <img src="assets/intro-image.png" alt="AI data pathways visualization" >
         </div>
       </div>
     </div>
@@ -78,7 +97,7 @@
           <p>Our team brings decades of combined experience in machine learning, natural language processing, computer vision, and data engineering. We've worked with Fortune 500 companies, agile startups, and public-sector organizations alike, always with the same focus: delivering AI that is practical, ethical, and built to last.</p>
         </div>
         <div class="image-col">
-          <img src="assets/about-image.png" alt="ClearPath AI team collaborating" loading="lazy">
+          <img src="assets/about-image.png" alt="ClearPath AI team collaborating" >
         </div>
       </div>
     </div>
@@ -90,7 +109,7 @@
     <div class="glass-panel">
       <div class="section-content">
         <h2 class="glow-text">Products & Services</h2>
-        <img src="assets/products-image.png" alt="ClearPath AI product suite" class="products-hero-image" loading="lazy">
+        <img src="assets/products-image.png" alt="ClearPath AI product suite" class="products-hero-image" >
         <div class="products-grid">
           <div class="product-card glass-card">
             <div class="product-icon">
@@ -170,5 +189,6 @@
   <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
   <script src="js/main.js" defer></script>
+  </div><!-- end #site -->
 </body>
 </html>
