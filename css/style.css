@@ -441,6 +441,12 @@ a {
   transform: translateY(0);
 }
 
+.cta-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* --- Section Layout --- */
 #introduction,
 #about,

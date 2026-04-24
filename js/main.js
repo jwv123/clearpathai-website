@@ -254,13 +254,15 @@ function closeMobileMenu() {
 }
 
 /* --- Contact Form UI --- */
+const WEBHOOK_URL = 'https://ef0ps4gk.rcsrv.net/webhook/d2b01cc4-9dc6-4abd-80e8-6e09b1dc3687';
+
 function initContactForm() {
   const form = document.getElementById('contact-form');
+  const submitBtn = form.querySelector('button[type="submit"]');
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Basic validation
     const name = form.querySelector('#name').value.trim();
     const email = form.querySelector('#email').value.trim();
     const message = form.querySelector('#message').value.trim();
@@ -276,9 +278,26 @@ function initContactForm() {
       return;
     }
 
-    // Success — show toast and reset form
-    showToast('Thank you! Your message has been sent.');
-    form.reset();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'SENDING...';
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message })
+      });
+
+      if (!res.ok) throw new Error(res.statusText);
+
+      showToast('Thank you! Your message has been sent.');
+      form.reset();
+    } catch {
+      showToast('Something went wrong. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'SEND MESSAGE';
+    }
   });
 }
 
