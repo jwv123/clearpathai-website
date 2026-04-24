@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/products/shareshift",
+      "destination": "https://sma-frontend-production.up.railway.app/"
+    },
+    {
+      "source": "/products/shareshift/:path*",
+      "destination": "https://sma-frontend-production.up.railway.app/:path*"
+    }
+  ]
+}

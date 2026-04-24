@@ -4,6 +4,7 @@
    ======================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initAudioToggle();
   initLoader();
 });
 
@@ -14,6 +15,7 @@ function initLoader() {
     'assets/intro-image.png',
     'assets/about-image.png',
     'assets/products-image.png',
+    'assets/shareshift.jpg',
     'assets/logo.jpg'
   ];
 
@@ -167,21 +169,23 @@ function initActiveSection() {
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-links a');
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.getAttribute('id');
-        navLinks.forEach(link => {
-          link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
-        });
+  function updateActiveLink() {
+    let currentId = '';
+    const scrollPos = window.scrollY + window.innerHeight / 3;
+
+    sections.forEach(section => {
+      if (scrollPos >= section.offsetTop) {
+        currentId = section.getAttribute('id');
       }
     });
-  }, {
-    threshold: 0.3,
-    rootMargin: '-80px 0px -50% 0px'
-  });
 
-  sections.forEach(section => observer.observe(section));
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveLink, { passive: true });
+  updateActiveLink();
 }
 
 /* --- Scroll-Triggered Section Reveals --- */
@@ -294,14 +298,39 @@ function initVideoFallback() {
 
   video.addEventListener('canplay', () => {
     video.play().catch(() => {
-      // Autoplay blocked — play on first user interaction
+      // Autoplay blocked — play on first user interaction (muted)
       const playOnInteraction = () => {
         video.play();
-        document.removeEventListener('click', playOnInteraction);
-        document.removeEventListener('touchstart', playOnInteraction);
       };
       document.addEventListener('click', playOnInteraction, { once: true });
       document.addEventListener('touchstart', playOnInteraction, { once: true });
     });
+  });
+}
+
+/* --- Audio Toggle --- */
+function initAudioToggle() {
+  const video = document.getElementById('hero-video');
+  const iconMuted = document.getElementById('audio-icon-muted');
+  const iconUnmuted = document.getElementById('audio-icon-unmuted');
+  const btn = document.getElementById('audio-toggle');
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+
+    if (video.muted) {
+      video.muted = false;
+      iconMuted.style.display = 'none';
+      iconUnmuted.style.display = '';
+      video.play().catch(() => {
+        video.muted = true;
+        iconMuted.style.display = '';
+        iconUnmuted.style.display = 'none';
+      });
+    } else {
+      video.muted = true;
+      iconMuted.style.display = '';
+      iconUnmuted.style.display = 'none';
+    }
   });
 }
