@@ -311,27 +311,57 @@ function showToast(message) {
   }, 3000);
 }
 
+/* --- Audio First-Play Tracking --- */
+let firstSoundPlayDone = false;
+
+function updateAudioIcons(muted) {
+  const iconMuted = document.getElementById('audio-icon-muted');
+  const iconUnmuted = document.getElementById('audio-icon-unmuted');
+  iconMuted.style.display = muted ? '' : 'none';
+  iconUnmuted.style.display = muted ? 'none' : '';
+}
+
 /* --- Video Autoplay Fallback --- */
 function initVideoFallback() {
   const video = document.getElementById('hero-video');
 
-  video.addEventListener('canplay', () => {
+  // Ensure video is playing (handles blocked autoplay)
+  if (video.paused) {
     video.play().catch(() => {
-      // Autoplay blocked — play on first user interaction (muted)
-      const playOnInteraction = () => {
-        video.play();
-      };
+      const playOnInteraction = () => { video.play(); };
       document.addEventListener('click', playOnInteraction, { once: true });
       document.addEventListener('touchstart', playOnInteraction, { once: true });
     });
+  }
+
+  // Unmute on first real user interaction (browsers require gesture for sound)
+  const unmuteOnInteraction = (e) => {
+    if (!e.isTrusted) return; // Ignore simulated clicks
+    if (!firstSoundPlayDone && video.muted) {
+      video.muted = false;
+      updateAudioIcons(false);
+    }
+    document.removeEventListener('click', unmuteOnInteraction);
+    document.removeEventListener('touchstart', unmuteOnInteraction);
+  };
+  document.addEventListener('click', unmuteOnInteraction);
+  document.addEventListener('touchstart', unmuteOnInteraction);
+
+  // Auto-mute after first playthrough with sound
+  video.addEventListener('timeupdate', () => {
+    if (!firstSoundPlayDone && !video.muted && video.duration > 0 && video.currentTime >= video.duration - 0.5) {
+      firstSoundPlayDone = true;
+      video.muted = true;
+      updateAudioIcons(true);
+      document.removeEventListener('click', unmuteOnInteraction);
+      document.removeEventListener('touchstart', unmuteOnInteraction);
+    }
   });
 }
 
 /* --- Audio Toggle --- */
 function initAudioToggle() {
   const video = document.getElementById('hero-video');
-  const iconMuted = document.getElementById('audio-icon-muted');
-  const iconUnmuted = document.getElementById('audio-icon-unmuted');
   const btn = document.getElementById('audio-toggle');
 
   btn.addEventListener('click', (e) => {
@@ -339,17 +369,14 @@ function initAudioToggle() {
 
     if (video.muted) {
       video.muted = false;
-      iconMuted.style.display = 'none';
-      iconUnmuted.style.display = '';
+      updateAudioIcons(false);
       video.play().catch(() => {
         video.muted = true;
-        iconMuted.style.display = '';
-        iconUnmuted.style.display = 'none';
+        updateAudioIcons(true);
       });
     } else {
       video.muted = true;
-      iconMuted.style.display = '';
-      iconUnmuted.style.display = 'none';
+      updateAudioIcons(true);
     }
   });
 }
